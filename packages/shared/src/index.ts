@@ -1,10 +1,17 @@
+/**
+ * These interfaces describe the HTTP contract, and JSON has no `Date` type —
+ * every timestamp below is an ISO 8601 string exactly as the backend serialises
+ * it. Typing them as `Date` would type-check and then throw the first time
+ * anyone called a Date method on the parsed response.
+ */
 export interface User {
   id: string;
   email: string;
   name: string;
   avatarUrl: string | null;
   currency: string;
-  createdAt: Date;
+  /** ISO 8601, e.g. `2025-03-01T00:00:00.000Z`. */
+  createdAt: string;
 }
 
 export interface Category {
@@ -37,10 +44,12 @@ export interface Transaction {
   amount: number;
   type: TransactionType;
   description: string | null;
-  date: Date;
+  /** ISO 8601. A date-only input is stored as midnight UTC. */
+  date: string;
   categoryId: string;
   userId: string;
-  createdAt: Date;
+  /** ISO 8601. */
+  createdAt: string;
 }
 
 export interface CreateExpenseDto {

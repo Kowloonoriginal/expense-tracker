@@ -34,10 +34,13 @@ export function toTransactionReadModel(
     // the moment the two TransactionType declarations diverge.
     type: transaction.type,
     description: transaction.description,
-    date: transaction.date,
+    // Explicit, not incidental: JSON.stringify already emitted exactly this, so
+    // the response body is unchanged — but now the shared type says so, and the
+    // frontend can no longer call Date methods on what is really a string.
+    date: transaction.date.toISOString(),
     categoryId: transaction.categoryId,
     userId: transaction.userId,
-    createdAt: transaction.createdAt,
+    createdAt: transaction.createdAt.toISOString(),
   };
 }
 

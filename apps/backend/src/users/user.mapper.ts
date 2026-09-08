@@ -9,6 +9,8 @@ export function toUserReadModel(user: User): UserReadModel {
     name: user.name,
     avatarUrl: user.avatarUrl,
     currency: user.currency,
-    createdAt: user.createdAt,
+    // ISO string, matching what JSON.stringify produced anyway — see the note on
+    // the shared interfaces.
+    createdAt: user.createdAt.toISOString(),
   };
 }
