@@ -9,7 +9,9 @@ import { useSession } from './session-context';
  * `isChecking` stays true until the session is known (and while the redirect is
  * in flight), so a form never flashes before navigating away.
  */
-export function useRedirectIfAuthenticated(to = '/'): { isChecking: boolean } {
+export function useRedirectIfAuthenticated(to = '/dashboard'): {
+  isChecking: boolean;
+} {
   const { user, isLoading } = useSession();
   const router = useRouter();
 
