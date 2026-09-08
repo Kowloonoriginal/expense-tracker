@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+
+  @@map("transaction_type")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  currency     String   @default("UAH")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  categories   Category[]
+  expenses     Expense[]
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model Category {
+  id     String @id @default(uuid())
+  name   String
+  color  String
+  icon   String @default("tag")
+  userId String @map("user_id")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses     Expense[]
+  transactions Transaction[]
+
+  @@map("categories")
+}
+
+/// Superseded by `Transaction` (which carries a type and a nullable
+/// description). Kept deliberately; nothing in the codebase reads it.
+model Expense {
+  id          String   @id @default(uuid())
+  amount      Float
+  description String
+  date        DateTime
+  createdAt   DateTime @default(now()) @map("created_at")
+  categoryId  String   @map("category_id")
+  userId      String   @map("user_id")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  amount      Decimal         @db.Decimal(12, 2)
+  type        TransactionType
+  description String?
+  date        DateTime
+  categoryId  String          @map("category_id")
+  userId      String          @map("user_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@map("transactions")
+}
