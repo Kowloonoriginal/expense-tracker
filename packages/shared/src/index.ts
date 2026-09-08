@@ -1,0 +1,135 @@
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl: string | null;
+  currency: string;
+  createdAt: Date;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+  userId: string;
+}
+
+export interface Expense {
+  id: string;
+  amount: number;
+  description: string;
+  date: Date;
+  categoryId: string;
+  userId: string;
+  createdAt: Date;
+}
+
+/**
+ * Mirrors the Prisma enum of the same name. Declared as a union rather than a
+ * TS enum on purpose: the backend imports from `@repo/shared` with `import type`
+ * only, so nothing here may exist at runtime.
+ */
+export type TransactionType = 'INCOME' | 'EXPENSE';
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  type: TransactionType;
+  description: string | null;
+  date: Date;
+  categoryId: string;
+  userId: string;
+  createdAt: Date;
+}
+
+export interface CreateExpenseDto {
+  amount: number;
+  description: string;
+  date: string;
+  categoryId: string;
+}
+
+export interface CreateTransactionDto {
+  amount: number;
+  type: TransactionType;
+  /** Omit to leave empty; an explicit `null` clears it on update. */
+  description?: string | null;
+  date: string;
+  categoryId: string;
+}
+
+export interface UpdateTransactionDto {
+  amount?: number;
+  type?: TransactionType;
+  description?: string | null;
+  date?: string;
+  categoryId?: string;
+}
+
+/** Query string of `GET /transactions`. Every field is optional. */
+export interface TransactionFiltersDto {
+  dateFrom?: string;
+  dateTo?: string;
+  type?: TransactionType;
+  categoryId?: string;
+}
+
+/** Query string of `GET /transactions/summary`. Both fields are required. */
+export interface TransactionSummaryQueryDto {
+  month: number;
+  year: number;
+}
+
+/** One row of the summary breakdown: a category, for one transaction type. */
+export interface CategorySummary {
+  categoryId: string;
+  name: string;
+  color: string;
+  icon: string;
+  type: TransactionType;
+  total: number;
+}
+
+export interface TransactionSummary {
+  month: number;
+  year: number;
+  income: number;
+  expense: number;
+  balance: number;
+  byCategory: CategorySummary[];
+}
+
+export interface CreateCategoryDto {
+  name: string;
+  color: string;
+  icon: string;
+}
+
+export interface UpdateCategoryDto {
+  name?: string;
+  color?: string;
+  icon?: string;
+}
+
+export interface LoginDto {
+  email: string;
+  password: string;
+}
+
+export interface RegisterDto {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  user: User;
+}
+
+/** Payload we sign into the JWT. `sub` is the user id (RFC 7519 convention). */
+export interface JwtPayload {
+  sub: string;
+  email: string;
+}
