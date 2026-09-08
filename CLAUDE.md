@@ -146,7 +146,7 @@ backend; `login`, `register`, `session`, `header`, `ui` on the frontend;
 change genuinely spans the repo (`chore: bump node to 22`).
 
 **Subject:** imperative mood, lowercase, no trailing period, header ≤72 chars
-("add monthly summary", not "Added monthly summary."). The body explains *why* —
+("add monthly summary", not "Added monthly summary."). The body explains _why_ —
 the mechanism is already in the diff. Wrap it at 72 columns.
 
 **Breaking changes** get a `!` after the scope and a `BREAKING CHANGE:` footer
