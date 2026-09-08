@@ -123,6 +123,37 @@ Copy `.env.example` to `.env` at the project root. Key vars:
 - `JWT_SECRET` / `JWT_EXPIRES_IN` — auth token config
 - `NEXT_PUBLIC_API_URL` — backend URL for the frontend (default `http://localhost:3001`)
 
+## Branches
+
+[GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow): `main`
+is always deployable and is never committed to directly. Every change —
+including a one-line doc fix — starts as a branch off the current `main`.
+
+```bash
+git checkout main && git pull
+git checkout -b feat/frontend-dashboard
+```
+
+**Naming:** `<type>/<short-kebab-description>`, reusing the commit types below
+(`feat/`, `fix/`, `refactor/`, `docs/`, `chore/`…). Describe the outcome, not
+the mechanism — `feat/monthly-summary`, not `feat/add-groupby-query`. In this
+monorepo a leading app name is fine when the same feature could land on either
+side (`feat/frontend-dashboard`).
+
+**One branch, one concern.** Short-lived is the point: a branch that outlives a
+few days has stopped being a unit of review. If a second, unrelated fix suggests
+itself mid-branch, branch again from `main` rather than smuggling it in — that
+is what keeps a PR reviewable and a revert surgical.
+
+**Merging:** open a PR, title it like a commit (`feat(dashboard): …`). Squash
+when the branch carries WIP noise, merge as-is when every commit stands on its
+own. Rebase onto `main` before merging so history stays linear, and delete the
+branch afterwards. Force-pushing your own unmerged feature branch is fine;
+force-pushing `main` or a branch someone else has checked out is not.
+
+Note: this repository has **no git remote configured yet**, so PRs are not
+possible until one is added — branches currently merge locally.
+
 ## Commits
 
 [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<scope>): <subject>`
