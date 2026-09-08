@@ -30,25 +30,44 @@ export class TransactionsRepository {
     return this.prisma.transaction.create({ data });
   }
 
-  findAllForUser(
+  /**
+   * One page of transactions plus the total under the *same* `where`.
+   *
+   * Both statements go through a single `$transaction` and share one `where`
+   * object: if the count and the page were separate round trips, a concurrent
+   * insert between them would produce a total that describes a different set of
+   * rows than the page, and the pager would point at a page that never existed.
+   */
+  async findPageForUser(
     userId: string,
     filters: TransactionQueryFilters,
-  ): Promise<Transaction[]> {
+    page: { skip: number; take: number },
+  ): Promise<{ items: Transaction[]; total: number }> {
     const { dateFrom, dateTo, type, categoryId } = filters;
 
-    return this.prisma.transaction.findMany({
-      where: {
-        userId,
-        // Prisma omits any condition whose value is `undefined`, so absent
-        // filters need no conditional spreading.
-        type,
-        categoryId,
-        date: dateFrom || dateTo ? { gte: dateFrom, lt: dateTo } : undefined,
-      },
-      // `date` is user-supplied and collides constantly (a whole day's entries
-      // share 00:00:00Z); `createdAt` gives the within-day order a stable tiebreak.
-      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
-    });
+    const where: Prisma.TransactionWhereInput = {
+      userId,
+      // Prisma omits any condition whose value is `undefined`, so absent
+      // filters need no conditional spreading.
+      type,
+      categoryId,
+      date: dateFrom || dateTo ? { gte: dateFrom, lt: dateTo } : undefined,
+    };
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.transaction.findMany({
+        where,
+        // `date` is user-supplied and collides constantly (a whole day's entries
+        // share 00:00:00Z); `createdAt` gives the within-day order a stable
+        // tiebreak — and a total order is what makes skip/take coherent at all.
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        skip: page.skip,
+        take: page.take,
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    return { items, total };
   }
 
   findByIdForUser(id: string, userId: string): Promise<Transaction | null> {

@@ -156,7 +156,8 @@ describe('Transactions (e2e)', () => {
         .get('/transactions')
         .set('Authorization', auth(token));
 
-      expect(list.body).toHaveLength(0);
+      expect(list.body.items).toHaveLength(0);
+      expect(list.body.total).toBe(0);
     });
   });
 
@@ -216,8 +217,8 @@ describe('Transactions (e2e)', () => {
         .set('Authorization', auth(token));
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].userId).toBe(userId);
+      expect(res.body.items).toHaveLength(1);
+      expect(res.body.items[0].userId).toBe(userId);
     });
 
     it("returns an identical 404 for another user's transaction and an unknown id", async () => {
@@ -337,21 +338,116 @@ describe('Transactions (e2e)', () => {
         '?dateFrom=2025-03-01&dateTo=2025-03-14&type=EXPENSE',
       );
 
-      expect(all.body).toHaveLength(4);
+      expect(all.body.items).toHaveLength(4);
+      expect(all.body.total).toBe(4);
       // Newest first.
-      expect(all.body[0].amount).toBe(40);
+      expect(all.body.items[0].amount).toBe(40);
 
-      expect(from.body.map((t: { amount: number }) => t.amount).sort()).toEqual(
-        [20, 30, 40],
-      );
+      expect(
+        from.body.items.map((t: { amount: number }) => t.amount).sort(),
+      ).toEqual([20, 30, 40]);
       // The date-only upper bound covers all of the 31st, including 18:00.
-      expect(to.body.map((t: { amount: number }) => t.amount).sort()).toEqual([
-        10, 20, 30,
-      ]);
-      expect(income.body).toHaveLength(1);
-      expect(byCategory.body).toHaveLength(4);
-      expect(combined.body).toHaveLength(1);
-      expect(combined.body[0].amount).toBe(10);
+      expect(
+        to.body.items.map((t: { amount: number }) => t.amount).sort(),
+      ).toEqual([10, 20, 30]);
+      expect(income.body.items).toHaveLength(1);
+      expect(byCategory.body.items).toHaveLength(4);
+      expect(combined.body.items).toHaveLength(1);
+      expect(combined.body.items[0].amount).toBe(10);
+    });
+  });
+
+  describe('pagination', () => {
+    /** 12 rows on distinct days, so `date desc` gives a deterministic order. */
+    const seedTwelve = () =>
+      prisma.transaction.createMany({
+        data: Array.from({ length: 12 }, (_, index) => ({
+          userId,
+          categoryId,
+          type: index < 4 ? ('INCOME' as const) : ('EXPENSE' as const),
+          amount: index + 1,
+          date: new Date(
+            `2025-05-${String(index + 1).padStart(2, '0')}T00:00:00.000Z`,
+          ),
+        })),
+      });
+
+    const list = (queryString: string) =>
+      request(app.getHttpServer())
+        .get(`/transactions${queryString}`)
+        .set('Authorization', auth(token));
+
+    it('defaults to page 1 with 10 per page', async () => {
+      await seedTwelve();
+
+      const res = await list('');
+
+      // Also proves the DTO's field initializers survive plainToInstance.
+      expect(res.body.items).toHaveLength(10);
+      expect(res.body.total).toBe(12);
+      expect(res.body.page).toBe(1);
+      expect(res.body.limit).toBe(10);
+    });
+
+    it('serves the tail on the last page without overlapping', async () => {
+      await seedTwelve();
+
+      const first = await list('?page=1');
+      const second = await list('?page=2');
+
+      expect(second.body.items).toHaveLength(2);
+      expect(second.body.page).toBe(2);
+
+      const ids = [...first.body.items, ...second.body.items].map(
+        (t: { id: string }) => t.id,
+      );
+      expect(new Set(ids).size).toBe(12);
+    });
+
+    it('returns an empty page past the end rather than a 404', async () => {
+      await seedTwelve();
+
+      const res = await list('?page=99');
+
+      expect(res.status).toBe(200);
+      expect(res.body.items).toEqual([]);
+      expect(res.body.total).toBe(12);
+      // Echoed as asked, not clamped.
+      expect(res.body.page).toBe(99);
+    });
+
+    it('honours an explicit limit', async () => {
+      await seedTwelve();
+
+      const res = await list('?limit=5');
+
+      expect(res.body.items).toHaveLength(5);
+      expect(res.body.total).toBe(12);
+      expect(res.body.limit).toBe(5);
+    });
+
+    it('counts the filtered set, not the whole table', async () => {
+      await seedTwelve();
+
+      const res = await list('?type=INCOME&limit=2');
+
+      expect(res.body.items).toHaveLength(2);
+      // 4 INCOME rows were seeded; the count must share the page's `where`.
+      expect(res.body.total).toBe(4);
+    });
+
+    it('rejects out-of-range paging with 400', async () => {
+      const zeroPage = await list('?page=0');
+      const zeroLimit = await list('?limit=0');
+      const overLimit = await list('?limit=101');
+      const notANumber = await list('?page=abc');
+
+      expect([
+        zeroPage.status,
+        zeroLimit.status,
+        overLimit.status,
+        notANumber.status,
+      ]).toEqual([400, 400, 400, 400]);
     });
   });
 

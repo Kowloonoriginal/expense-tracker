@@ -1,7 +1,10 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { TransactionsRepository } from '../transactions.repository';
 import { toTransactionReadModel } from '../transaction.mapper';
-import { GetTransactionsQuery, TransactionReadModel } from '../contracts';
+import {
+  GetTransactionsQuery,
+  PaginatedTransactionsReadModel,
+} from '../contracts';
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -21,16 +24,19 @@ function toExclusiveEnd(value: string | undefined): Date | undefined {
 @QueryHandler(GetTransactionsQuery)
 export class GetTransactionsHandler implements IQueryHandler<
   GetTransactionsQuery,
-  TransactionReadModel[]
+  PaginatedTransactionsReadModel
 > {
   constructor(
     private readonly transactionsRepository: TransactionsRepository,
   ) {}
 
-  async execute(query: GetTransactionsQuery): Promise<TransactionReadModel[]> {
+  async execute(
+    query: GetTransactionsQuery,
+  ): Promise<PaginatedTransactionsReadModel> {
     const { dateFrom, dateTo, type, categoryId } = query.filters;
+    const { page, limit } = query.pagination;
 
-    const transactions = await this.transactionsRepository.findAllForUser(
+    const { items, total } = await this.transactionsRepository.findPageForUser(
       query.userId,
       {
         // `gte` on 00:00:00Z is already the intended inclusive start.
@@ -39,8 +45,12 @@ export class GetTransactionsHandler implements IQueryHandler<
         type,
         categoryId,
       },
+      { skip: (page - 1) * limit, take: limit },
     );
 
-    return transactions.map(toTransactionReadModel);
+    // `page` is echoed as asked rather than clamped: a request for page 99 of 3
+    // gets an empty list with the real total, and the client can see for itself
+    // that it overshot. Clamping would answer a question nobody asked.
+    return { items: items.map(toTransactionReadModel), total, page, limit };
   }
 }

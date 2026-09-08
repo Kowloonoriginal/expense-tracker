@@ -10,4 +10,6 @@ export * from './queries/get-transaction-by-id.query';
 export * from './queries/get-transaction-summary.query';
 export * from './models/transaction.read-model';
 export * from './models/transaction-summary.read-model';
+export * from './models/paginated-transactions.read-model';
 export * from './models/transaction-filters';
+export * from './models/pagination';

@@ -21,6 +21,7 @@ import {
   GetTransactionByIdQuery,
   GetTransactionSummaryQuery,
   GetTransactionsQuery,
+  PaginatedTransactionsReadModel,
   RemoveTransactionCommand,
   TransactionReadModel,
   TransactionSummaryReadModel,
@@ -59,9 +60,22 @@ export class TransactionsController {
   @Get()
   findAll(
     @CurrentUser('id') userId: string,
-    @Query() filters: GetTransactionsQueryDto,
-  ): Promise<TransactionReadModel[]> {
-    return this.queryBus.execute(new GetTransactionsQuery(userId, filters));
+    @Query() query: GetTransactionsQueryDto,
+  ): Promise<PaginatedTransactionsReadModel> {
+    // Split explicitly rather than passing the DTO through as `filters`: that is
+    // what keeps TransactionFilters from silently acquiring page and limit.
+    return this.queryBus.execute(
+      new GetTransactionsQuery(
+        userId,
+        {
+          dateFrom: query.dateFrom,
+          dateTo: query.dateTo,
+          type: query.type,
+          categoryId: query.categoryId,
+        },
+        { page: query.page, limit: query.limit },
+      ),
+    );
   }
 
   /**

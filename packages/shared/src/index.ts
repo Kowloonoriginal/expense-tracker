@@ -76,13 +76,38 @@ export interface UpdateTransactionDto {
   categoryId?: string;
 }
 
-/** Query string of `GET /transactions`. Every field is optional. */
+/**
+ * Envelope every paginated list endpoint returns. `page` and `limit` echo what
+ * the server actually applied, so the client never has to guess its defaults.
+ *
+ * `totalPages` is deliberately absent: it is `Math.ceil(total / limit)`, and a
+ * second source of truth for one number eventually disagrees with the first.
+ */
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  /** 1-based, echoed even when it points past the last page. */
+  page: number;
+  limit: number;
+}
+
+/** Pagination half of a list query. Server defaults: page 1, limit 10 (max 100). */
+export interface PaginationQueryDto {
+  page?: number;
+  limit?: number;
+}
+
+/** Which rows to select. Kept separate from pagination, which slices the result. */
 export interface TransactionFiltersDto {
   dateFrom?: string;
   dateTo?: string;
   type?: TransactionType;
   categoryId?: string;
 }
+
+/** Full query string of `GET /transactions`: filters plus pagination. */
+export interface TransactionListQueryDto
+  extends TransactionFiltersDto, PaginationQueryDto {}
 
 /** Query string of `GET /transactions/summary`. Both fields are required. */
 export interface TransactionSummaryQueryDto {
