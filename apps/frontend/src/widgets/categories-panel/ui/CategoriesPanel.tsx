@@ -1,0 +1,72 @@
+'use client';
+
+import { useState } from 'react';
+import { CategoryBadge, getCategories } from '@/entities/category';
+import { CategoryForm } from '@/features/create-category';
+import { useAsync } from '@/shared/lib/use-async';
+import { Alert, AlertDescription } from '@/shared/ui/alert';
+import { Button } from '@/shared/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Skeleton } from '@/shared/ui/skeleton';
+
+export function CategoriesPanel() {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const { data, error, isLoading, reload } = useAsync(getCategories, []);
+  const categories = data ?? [];
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between gap-4">
+        <CardTitle>Категорії</CardTitle>
+        <Button
+          variant={isFormOpen ? 'ghost' : 'default'}
+          size="sm"
+          onClick={() => setIsFormOpen((open) => !open)}
+        >
+          {isFormOpen ? 'Скасувати' : 'Додати'}
+        </Button>
+      </CardHeader>
+
+      <CardContent className="grid gap-4">
+        {isFormOpen && (
+          <CategoryForm
+            onCreated={() => {
+              setIsFormOpen(false);
+              reload();
+            }}
+          />
+        )}
+
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : isLoading ? (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }, (_, index) => (
+              <Skeleton key={index} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : categories.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            Категорій ще немає — створіть першу, щоб почати вести облік.
+          </p>
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((category) => (
+              <li
+                key={category.id}
+                className="rounded-lg border px-3 py-2.5 text-sm"
+              >
+                <CategoryBadge name={category.name} color={category.color} />
+                <span className="ml-2 text-muted-foreground">
+                  {category.icon}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
