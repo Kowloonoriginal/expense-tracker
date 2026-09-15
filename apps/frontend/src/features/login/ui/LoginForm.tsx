@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,7 +17,6 @@ import {
 import { loginSchema, type LoginFormValues } from '../model/schema';
 
 export function LoginForm() {
-  const router = useRouter();
   const { startSession } = useSession();
   const { isChecking } = useRedirectIfAuthenticated();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -31,8 +29,11 @@ export function LoginForm() {
   async function onSubmit(values: LoginFormValues) {
     setServerError(null);
     try {
+      // No router.push here: startSession flips `user`, which is exactly
+      // what useRedirectIfAuthenticated above is watching for — it owns the
+      // post-login destination. Pushing here too raced it and could flash
+      // the public landing page for a frame before being replaced.
       startSession(await login(values));
-      router.push('/');
     } catch (err) {
       setServerError(authErrorMessage(err));
     }

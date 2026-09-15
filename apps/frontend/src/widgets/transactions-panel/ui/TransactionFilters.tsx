@@ -28,6 +28,7 @@ export function TransactionFilters({
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
       <SelectField
         label="Тип"
+        name="type"
         value={filters.type ?? ''}
         onChange={(event) =>
           onChange({
@@ -46,6 +47,7 @@ export function TransactionFilters({
 
       <SelectField
         label="Категорія"
+        name="categoryId"
         value={filters.categoryId ?? ''}
         onChange={(event) =>
           onChange({ ...filters, categoryId: event.target.value || undefined })
@@ -61,6 +63,7 @@ export function TransactionFilters({
 
       <FormField
         label="Від"
+        name="dateFrom"
         type="date"
         value={filters.dateFrom ?? ''}
         onChange={(event) =>
@@ -69,6 +72,7 @@ export function TransactionFilters({
       />
       <FormField
         label="До"
+        name="dateTo"
         type="date"
         value={filters.dateTo ?? ''}
         onChange={(event) =>

@@ -52,23 +52,38 @@ export function useAsync<T>(
 
   useEffect(() => {
     const id = ++requestId.current;
+    // A request-id mismatch alone only rejects a *superseded* request (a
+    // newer one already started) — it does not catch the component
+    // unmounting entirely while this one is still in flight, since nothing
+    // else changes `requestId.current` in that case. `cancelled` covers that
+    // second path: without it, navigating away mid-request still runs
+    // setData/setError/setIsFetching against a torn-down component.
+    let cancelled = false;
     setIsFetching(true);
+    // Cleared here, not just on success: otherwise a failed request's error
+    // stays on screen through the next attempt, with no loading feedback,
+    // until that attempt itself resolves.
+    setError(null);
 
     runRef
       .current()
       .then((result) => {
-        if (id !== requestId.current) return;
+        if (cancelled || id !== requestId.current) return;
         setData(result);
         setError(null);
       })
       .catch((err: unknown) => {
-        if (id !== requestId.current) return;
+        if (cancelled || id !== requestId.current) return;
         setError(toMessage(err));
       })
       .finally(() => {
-        if (id !== requestId.current) return;
+        if (cancelled || id !== requestId.current) return;
         setIsFetching(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
     // `deps` is the caller's contract and `run` is deliberately read through a
     // ref, so this list is spread rather than declared literally — the plugin
     // can't statically verify a spread array, hence the warning below. Every

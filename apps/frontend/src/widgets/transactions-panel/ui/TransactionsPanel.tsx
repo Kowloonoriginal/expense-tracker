@@ -33,13 +33,19 @@ export function TransactionsPanel({
   const { user } = useSession();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<TransactionFiltersDto>({});
-  const [refreshKey, setRefreshKey] = useState(0);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const categoriesState = useAsync(getCategories, []);
   const categories = categoriesState.data ?? [];
-  const { data, error, isLoading, isFetching, total, totalPages } =
-    useTransactionsPage(page, filters, refreshKey);
+  const {
+    data,
+    error,
+    isLoading,
+    isFetching,
+    total,
+    totalPages,
+    reload: reloadTransactions,
+  } = useTransactionsPage(page, filters);
 
   const transactions = data?.items ?? [];
   const currency = user?.currency ?? 'UAH';
@@ -70,10 +76,12 @@ export function TransactionsPanel({
         {showCreate && isFormOpen && (
           <TransactionForm
             categories={categories}
+            isLoadingCategories={categoriesState.isLoading}
+            categoriesError={categoriesState.error}
             onCreated={() => {
               setIsFormOpen(false);
               setPage(1);
-              setRefreshKey((key) => key + 1);
+              reloadTransactions();
             }}
           />
         )}

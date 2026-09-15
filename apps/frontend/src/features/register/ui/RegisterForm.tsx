@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,7 +19,6 @@ import {
 import { registerSchema, type RegisterFormValues } from '../model/schema';
 
 export function RegisterForm() {
-  const router = useRouter();
   const { startSession } = useSession();
   const { isChecking } = useRedirectIfAuthenticated();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -41,8 +39,10 @@ export function RegisterForm() {
   async function onSubmit({ email, name, password }: RegisterFormValues) {
     setServerError(null);
     try {
+      // No router.push here — see LoginForm's onSubmit for why:
+      // useRedirectIfAuthenticated above already owns the post-auth
+      // destination and reacts to startSession's user update on its own.
       startSession(await registerUser({ email, name, password }));
-      router.push('/');
     } catch (err) {
       setServerError(authErrorMessage(err));
     }

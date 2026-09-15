@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-field';
 import { SelectField } from '@/shared/ui/select-field';
+import { Skeleton } from '@/shared/ui/skeleton';
 import {
   createTransactionSchema,
   type CreateTransactionValues,
@@ -19,11 +20,21 @@ import {
 interface TransactionFormProps {
   /** Passed in by the parent, which already loaded them for its filter. */
   categories: Category[];
+  /**
+   * `categories` is `[]` in three different situations — not loaded yet,
+   * failed to load, and genuinely empty — and those need three different
+   * messages, not one. Without `isLoadingCategories` a user on a slow
+   * connection was briefly told to go create a category they already have.
+   */
+  isLoadingCategories: boolean;
+  categoriesError: string | null;
   onCreated: (transaction: Transaction) => void;
 }
 
 export function TransactionForm({
   categories,
+  isLoadingCategories,
+  categoriesError,
   onCreated,
 }: TransactionFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -39,6 +50,18 @@ export function TransactionForm({
       date: new Date().toISOString().slice(0, 10),
     },
   });
+
+  if (isLoadingCategories) {
+    return <Skeleton className="h-24 w-full" />;
+  }
+
+  if (categoriesError) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertDescription>{categoriesError}</AlertDescription>
+      </Alert>
+    );
+  }
 
   // A fresh account has no categories, and categoryId is required — so without
   // this the first thing a new user can do is fail.
