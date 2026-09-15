@@ -72,7 +72,12 @@ model Transaction {
   userId      String          @map("user_id")
   createdAt   DateTime        @default(now()) @map("created_at")
 
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  // Restrict, not Cascade: a category with recorded transactions must not be
+  // deletable by accident — that would silently destroy financial history
+  // with a 204 and no warning. Deleting the category now fails at the
+  // database level (P2003), which PrismaClientExceptionFilter turns into a
+  // 409 telling the caller transactions still reference it.
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])

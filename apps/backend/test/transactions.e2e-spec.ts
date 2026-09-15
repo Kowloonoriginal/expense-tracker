@@ -634,6 +634,40 @@ describe('Transactions (e2e)', () => {
     });
   });
 
+  describe('category integrity', () => {
+    it('refuses to delete a category that still has transactions', async () => {
+      const guarded = await createCategory(token, 'Guarded');
+      await createTransaction(token, validBody({ categoryId: guarded }));
+
+      const res = await request(app.getHttpServer())
+        .delete(`/categories/${guarded}`)
+        .set('Authorization', auth(token));
+
+      // onDelete: Restrict raises P2003, which PrismaClientExceptionFilter
+      // maps to 409 rather than letting the delete silently cascade and
+      // destroy the transaction.
+      expect(res.status).toBe(409);
+
+      const stillThere = await request(app.getHttpServer())
+        .get('/categories')
+        .set('Authorization', auth(token));
+
+      expect(
+        stillThere.body.some((c: { id: string }) => c.id === guarded),
+      ).toBe(true);
+    });
+
+    it('still allows deleting a category with no transactions', async () => {
+      const empty = await createCategory(token, 'Empty');
+
+      const res = await request(app.getHttpServer())
+        .delete(`/categories/${empty}`)
+        .set('Authorization', auth(token));
+
+      expect(res.status).toBe(204);
+    });
+  });
+
   it('rejects every route without a token', async () => {
     const server = app.getHttpServer();
     const someId = '00000000-0000-0000-0000-000000000000';

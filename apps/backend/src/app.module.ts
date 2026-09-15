@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
@@ -13,6 +13,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { validateEnv } from './config/validate-env';
+import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter';
 
 @Module({
   imports: [
@@ -54,6 +55,13 @@ import { validateEnv } from './config/validate-env';
     TransactionsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Registered as a provider (not app.useGlobalFilters in main.ts) so it
+    // also applies inside e2e tests, which boot AppModule directly via
+    // Test.createTestingModule rather than through bootstrap().
+    { provide: APP_FILTER, useClass: PrismaClientExceptionFilter },
+  ],
 })
 export class AppModule {}
