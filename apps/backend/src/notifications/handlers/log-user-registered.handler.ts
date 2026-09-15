@@ -12,6 +12,9 @@ export class LogUserRegisteredHandler implements IEventHandler<UserRegisteredEve
   private readonly logger = new Logger(LogUserRegisteredHandler.name);
 
   handle(event: UserRegisteredEvent) {
-    this.logger.log(`User registered: ${event.email} (${event.userId})`);
+    // userId alone is enough to look the account up if needed — logging the
+    // email too would put PII into whatever ships or retains these logs for
+    // no operational benefit over the id.
+    this.logger.log(`User registered: ${event.userId}`);
   }
 }

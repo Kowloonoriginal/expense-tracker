@@ -2,6 +2,7 @@
 
 import type { Category, Transaction } from '@repo/shared';
 import { TransactionRow } from '@/entities/transaction';
+import { CategoryBadge } from '@/entities/category';
 import {
   Table,
   TableBody,
@@ -57,14 +58,25 @@ export function TransactionsTable({
                   </TableCell>
                 </TableRow>
               ))
-            : transactions.map((transaction) => (
-                <TransactionRow
-                  key={transaction.id}
-                  transaction={transaction}
-                  category={categories.get(transaction.categoryId)}
-                  currency={currency}
-                />
-              ))}
+            : transactions.map((transaction) => {
+                const category = categories.get(transaction.categoryId);
+
+                return (
+                  <TransactionRow
+                    key={transaction.id}
+                    transaction={transaction}
+                    categoryBadge={
+                      category && (
+                        <CategoryBadge
+                          name={category.name}
+                          color={category.color}
+                        />
+                      )
+                    }
+                    currency={currency}
+                  />
+                );
+              })}
         </TableBody>
       </Table>
     </div>

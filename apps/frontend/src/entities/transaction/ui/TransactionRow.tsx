@@ -1,19 +1,23 @@
-import type { Category, Transaction } from '@repo/shared';
-import { CategoryBadge } from '@/entities/category';
+import type { ReactNode } from 'react';
+import type { Transaction } from '@repo/shared';
 import { TableCell, TableRow } from '@/shared/ui/table';
 import { formatDate } from '@/shared/lib/format';
 import { TransactionAmount } from './TransactionAmount';
 
 interface TransactionRowProps {
   transaction: Transaction;
-  /** Passed in, never fetched — the list already loaded the categories. */
-  category?: Category;
+  /**
+   * Rendered as-is, not resolved here — an entity may not reach sideways into
+   * another entity (`entities/category`) just to render its badge. The
+   * widget composing this row owns both entities and builds the badge.
+   */
+  categoryBadge?: ReactNode;
   currency: string;
 }
 
 export function TransactionRow({
   transaction,
-  category,
+  categoryBadge,
   currency,
 }: TransactionRowProps) {
   return (
@@ -27,11 +31,7 @@ export function TransactionRow({
         )}
       </TableCell>
       <TableCell>
-        {category ? (
-          <CategoryBadge name={category.name} color={category.color} />
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
+        {categoryBadge ?? <span className="text-muted-foreground">—</span>}
       </TableCell>
       <TableCell className="text-right">
         <TransactionAmount

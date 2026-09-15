@@ -22,14 +22,17 @@ export interface Category {
   userId: string;
 }
 
+/** Superseded by `Transaction`; kept for compatibility, nothing constructs one. */
 export interface Expense {
   id: string;
   amount: number;
   description: string;
-  date: Date;
+  /** ISO 8601 — see the file header note on why these aren't `Date`. */
+  date: string;
   categoryId: string;
   userId: string;
-  createdAt: Date;
+  /** ISO 8601. */
+  createdAt: string;
 }
 
 /**
