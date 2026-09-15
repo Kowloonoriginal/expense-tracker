@@ -70,8 +70,13 @@ export function useAsync<T>(
         setIsFetching(false);
       });
     // `deps` is the caller's contract and `run` is deliberately read through a
-    // ref, so this list is spread rather than declared literally. (The repo's
-    // ESLint config has no react-hooks plugin, so there is no rule to silence.)
+    // ref, so this list is spread rather than declared literally — the plugin
+    // can't statically verify a spread array, hence the warning below. Every
+    // current call site passes a fixed-length array (see call sites), so this
+    // is safe today; a future variable-length `deps` would throw at runtime
+    // ("the final argument passed to useEffect changed size between renders"),
+    // which is the real risk this comment is flagging for the next change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, version]);
 
   const reload = useCallback(() => setVersion((current) => current + 1), []);

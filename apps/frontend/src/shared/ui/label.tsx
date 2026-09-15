@@ -6,6 +6,11 @@ import { cn } from '@/shared/lib/utils';
 
 function Label({ className, ...props }: React.ComponentProps<'label'>) {
   return (
+    /* eslint-disable-next-line jsx-a11y/label-has-associated-control --
+       this is the generic UI-kit primitive; `htmlFor` arrives via `...props`
+       at call sites (form-field.tsx, select-field.tsx), which the rule can't
+       see through a spread. Actual call sites are still checked when they
+       inline a <label>. */
     <label
       data-slot="label"
       className={cn(
