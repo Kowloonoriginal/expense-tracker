@@ -10,6 +10,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { SkipThrottle } from '@nestjs/throttler';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -25,7 +26,13 @@ import {
  * Every route here is protected by the global JwtAuthGuard — none is `@Public()`
  * — and every one is scoped to `@CurrentUser('id')`, so a user can only ever
  * read or write their own categories.
+ *
+ * The `auth-ip` throttler (app.module.ts) is scoped to /auth/register and
+ * /auth/login only — an authenticated user paging through their own data is
+ * not the password-spraying scenario it exists for, so this controller opts
+ * out rather than sharing that budget.
  */
+@SkipThrottle({ 'auth-ip': true })
 @Controller('categories')
 export class CategoriesController {
   constructor(

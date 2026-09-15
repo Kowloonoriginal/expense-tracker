@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { SkipThrottle } from '@nestjs/throttler';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -32,7 +33,13 @@ import {
  * Every route here is protected by the global JwtAuthGuard — none is `@Public()`
  * — and every one is scoped to `@CurrentUser('id')`, so a user can only ever
  * read or write their own transactions.
+ *
+ * The `auth-ip` throttler (app.module.ts) is scoped to /auth/register and
+ * /auth/login only — an authenticated user paging through their own data is
+ * not the password-spraying scenario it exists for, so this controller opts
+ * out rather than sharing that budget.
  */
+@SkipThrottle({ 'auth-ip': true })
 @Controller('transactions')
 export class TransactionsController {
   constructor(

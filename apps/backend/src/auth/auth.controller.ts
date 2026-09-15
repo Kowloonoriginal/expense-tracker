@@ -7,7 +7,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { AuthResponse } from '@repo/shared';
 import { UserReadModel } from '@/users/contracts';
 import { RegisterDto } from './dto/register.dto';
@@ -41,7 +41,12 @@ export class AuthController {
     );
   }
 
-  /** Protected by the global JwtAuthGuard — used by the frontend to restore a session. */
+  /**
+   * Protected by the global JwtAuthGuard — used by the frontend to restore a
+   * session, and re-called on every authenticated page mount (RequireAuth),
+   * so it shares none of the `auth-ip` budget register/login use.
+   */
+  @SkipThrottle({ 'auth-ip': true })
   @Get('me')
   me(@CurrentUser() user: UserReadModel): UserReadModel {
     return user;
