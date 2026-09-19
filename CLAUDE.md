@@ -145,14 +145,51 @@ few days has stopped being a unit of review. If a second, unrelated fix suggests
 itself mid-branch, branch again from `main` rather than smuggling it in — that
 is what keeps a PR reviewable and a revert surgical.
 
-**Merging:** open a PR, title it like a commit (`feat(dashboard): …`). Squash
-when the branch carries WIP noise, merge as-is when every commit stands on its
-own. Rebase onto `main` before merging so history stays linear, and delete the
-branch afterwards. Force-pushing your own unmerged feature branch is fine;
-force-pushing `main` or a branch someone else has checked out is not.
+**Merging** goes through a PR — see *Pull requests* below. Force-pushing your
+own unmerged feature branch is fine; force-pushing `main` or a branch someone
+else has checked out is not.
 
-Note: this repository has **no git remote configured yet**, so PRs are not
-possible until one is added — branches currently merge locally.
+## Pull requests
+
+The remote is [`Kowloonoriginal/expense-tracker`](https://github.com/Kowloonoriginal/expense-tracker);
+open PRs with `gh`, never by pushing to `main`.
+
+```bash
+git push -u origin feat/monthly-summary
+gh pr create --base main --title "feat(transactions): add monthly summary" --body-file <file>
+```
+
+**Title** is a Conventional Commit header, same rules as a commit subject:
+`<type>(<scope>): <subject>`, imperative, lowercase, ≤72 chars. The title is
+what lands in history on a squash merge, so it has to stand on its own.
+
+**Before writing the body, read the diff** — `git diff main...HEAD` (three dots:
+the branch's own changes, not `main`'s) plus `--stat` for the shape of it. The
+description is written from the diff, not from memory of the task.
+
+**Body** covers, in this order, skipping what does not apply:
+
+1. **Що реалізовано** — the user-visible outcome and the _why_; the mechanism is
+   already in the diff.
+2. **Ендпоінти** — every route added or changed, as `METHOD /path` with its DTO
+   from `@repo/shared` and whether it is `@Public()` or behind `JwtAuthGuard`.
+   Say "нових ендпоінтів немає" explicitly when there are none — a reviewer
+   should not have to infer it from silence.
+3. **Схема / міграції** — new Prisma models or migrations, and whether the
+   migration is destructive.
+4. **Файли** — a short table of touched files and what changed in each, for a
+   diff small enough that a table beats scrolling.
+5. **Як перевірити** — the exact commands and the route to open.
+6. **Ризики / поза скоупом** — what was deliberately left out, and anything a
+   reviewer should watch for.
+
+Breaking changes get the same `BREAKING CHANGE:` note as the commit, with the
+migration path spelled out. PR descriptions Claude Code writes end with the
+`🤖 Generated with [Claude Code](https://claude.com/claude-code)` line.
+
+**Merging:** squash when the branch carries WIP noise, merge as-is when every
+commit stands on its own. Rebase onto `main` before merging so history stays
+linear, and delete the branch afterwards.
 
 ## Commits
 
