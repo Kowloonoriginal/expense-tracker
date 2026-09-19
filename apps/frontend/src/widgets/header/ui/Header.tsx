@@ -23,7 +23,7 @@ export function Header() {
           href={user ? '/dashboard' : '/'}
           className="font-heading text-sm font-medium"
         >
-          Expense Tracker
+          Трекер витрат
         </Link>
         {!isLoading && user && <MainNav />}
       </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Політика обробки персональних даних — Expense Tracker',
+  title: 'Політика обробки персональних даних — Трекер витрат',
 };
 
 export default function PrivacyPage() {

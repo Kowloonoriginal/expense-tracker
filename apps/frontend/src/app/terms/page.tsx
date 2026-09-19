@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Умови користування — Expense Tracker',
+  title: 'Умови користування — Трекер витрат',
 };
 
 export default function TermsPage() {

@@ -5,11 +5,14 @@ import { cn } from '@/shared/lib/utils';
 import { SessionProvider } from '@/entities/session';
 import { Header } from '@/widgets/header';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const geist = Geist({
+  subsets: ['latin', 'latin-ext', 'cyrillic'],
+  variable: '--font-sans',
+});
 
 export const metadata: Metadata = {
-  title: 'Expense Tracker',
-  description: 'Track your expenses easily',
+  title: 'Трекер витрат',
+  description: 'Записуйте доходи й витрати та стежте за балансом щомісяця',
 };
 
 export default function RootLayout({
