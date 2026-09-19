@@ -6,7 +6,7 @@ import { SessionProvider } from '@/entities/session';
 import { Header } from '@/widgets/header';
 
 const geist = Geist({
-  subsets: ['latin', 'cyrillic'],
+  subsets: ['latin', 'latin-ext', 'cyrillic'],
   variable: '--font-sans',
 });
 
