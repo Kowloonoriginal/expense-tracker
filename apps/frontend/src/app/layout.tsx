@@ -5,7 +5,10 @@ import { cn } from '@/shared/lib/utils';
 import { SessionProvider } from '@/entities/session';
 import { Header } from '@/widgets/header';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const geist = Geist({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-sans',
+});
 
 export const metadata: Metadata = {
   title: 'Трекер витрат',
