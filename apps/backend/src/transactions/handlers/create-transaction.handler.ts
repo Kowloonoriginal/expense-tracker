@@ -22,6 +22,14 @@ export class CreateTransactionHandler implements ICommandHandler<
     private readonly queryBus: QueryBus,
   ) {}
 
+  /**
+   * Creates a transaction after verifying the caller owns the target category.
+   *
+   * @param command - Transaction data plus the authenticated `userId`.
+   * @returns The created transaction (`TransactionReadModel`).
+   * @throws {NotFoundException} `command.categoryId` does not exist or belongs
+   *   to another user.
+   */
   async execute(
     command: CreateTransactionCommand,
   ): Promise<TransactionReadModel> {

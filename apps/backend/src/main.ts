@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -33,6 +34,21 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // JwtAuthGuard is global (APP_GUARD), so every route needs a bearer token
+  // unless it is @Public() — `addBearerAuth()` is what puts the "Authorize"
+  // button in the UI and lets `@ApiBearerAuth()` reference the scheme by name.
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Expense Tracker API')
+    .setDescription('REST API for the Expense Tracker backend')
+    .setVersion('1.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'access-token',
+    )
+    .build();
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, swaggerDocument);
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

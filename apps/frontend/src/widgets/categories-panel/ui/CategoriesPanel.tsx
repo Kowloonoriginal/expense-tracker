@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { CategoryBadge, getCategories } from '@/entities/category';
+import { CategoryBadge, useCategories } from '@/entities/category';
 import { CategoryForm } from '@/features/create-category';
-import { useAsync } from '@/shared/lib/use-async';
+import { toMessage } from '@/shared/api/error-message';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -11,7 +11,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 
 export function CategoriesPanel() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const { data, error, isLoading, reload } = useAsync(getCategories, []);
+  const { data, error, isLoading } = useCategories();
   const categories = data ?? [];
 
   return (
@@ -30,16 +30,14 @@ export function CategoriesPanel() {
       <CardContent className="grid gap-4">
         {isFormOpen && (
           <CategoryForm
-            onCreated={() => {
-              setIsFormOpen(false);
-              reload();
-            }}
+            // The list refetches itself — useCreateCategory invalidates it.
+            onCreated={() => setIsFormOpen(false)}
           />
         )}
 
         {error ? (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{toMessage(error)}</AlertDescription>
           </Alert>
         ) : isLoading ? (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

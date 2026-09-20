@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import type { TransactionFiltersDto } from '@repo/shared';
-import { getCategories, toCategoryMap } from '@/entities/category';
+import { useCategories, toCategoryMap } from '@/entities/category';
 import { useSession } from '@/entities/session';
 import { TransactionForm } from '@/features/create-transaction';
-import { useAsync } from '@/shared/lib/use-async';
+import { toMessage } from '@/shared/api/error-message';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -21,9 +21,11 @@ interface TransactionsPanelProps {
 }
 
 /**
- * A widget rather than a feature: it must refresh after the create form
- * succeeds, and the list and the form are sibling slices. A widget may import
- * features, so it can own the refresh key itself and keep the route file thin.
+ * A widget rather than a feature: it composes the list with the create form,
+ * which are sibling slices, and a widget is the layer allowed to import a
+ * feature. The refresh after a create is no longer its job — the mutation
+ * invalidates the transaction keys — but keeping the composition here still
+ * keeps the route file thin.
  */
 export function TransactionsPanel({
   title = 'Транзакції',
@@ -35,19 +37,11 @@ export function TransactionsPanel({
   const [filters, setFilters] = useState<TransactionFiltersDto>({});
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const categoriesState = useAsync(getCategories, []);
-  const categories = categoriesState.data ?? [];
-  const {
-    data,
-    error,
-    isLoading,
-    isFetching,
-    total,
-    totalPages,
-    reload: reloadTransactions,
-  } = useTransactionsPage(page, filters);
+  const categoriesQuery = useCategories();
+  const categories = categoriesQuery.data ?? [];
+  const { transactions, error, isLoading, isFetching, total, totalPages } =
+    useTransactionsPage(page, filters);
 
-  const transactions = data?.items ?? [];
   const currency = user?.currency ?? 'UAH';
   const hasFilters = Object.values(filters).some(Boolean);
 
@@ -76,12 +70,15 @@ export function TransactionsPanel({
         {showCreate && isFormOpen && (
           <TransactionForm
             categories={categories}
-            isLoadingCategories={categoriesState.isLoading}
-            categoriesError={categoriesState.error}
+            isLoadingCategories={categoriesQuery.isLoading}
+            categoriesError={
+              categoriesQuery.error ? toMessage(categoriesQuery.error) : null
+            }
             onCreated={() => {
               setIsFormOpen(false);
+              // The list refetches itself through invalidation; page 1 is where
+              // the new transaction will be.
               setPage(1);
-              reloadTransactions();
             }}
           />
         )}

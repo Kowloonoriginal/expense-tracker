@@ -22,6 +22,20 @@ export class UpdateTransactionHandler implements ICommandHandler<
     private readonly queryBus: QueryBus,
   ) {}
 
+  /**
+   * Partially updates a transaction owned by the caller.
+   *
+   * Verifies ownership of the transaction first, then — only when
+   * `command.categoryId` is present — ownership of the new category, so a
+   * foreign transaction id fails on the transaction rather than the category.
+   *
+   * @param command - `id`/`userId` of the target transaction plus the fields
+   *   to change; a field left `undefined` is left untouched.
+   * @returns The updated transaction (`TransactionReadModel`).
+   * @throws {NotFoundException} `command.id` does not exist or belongs to
+   *   another user, or `command.categoryId` does not exist or belongs to
+   *   another user.
+   */
   async execute(
     command: UpdateTransactionCommand,
   ): Promise<TransactionReadModel> {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Category } from '@repo/shared';
-import { createCategory } from '@/entities/category';
+import { useCreateCategory } from '@/entities/category';
 import { toMessage } from '@/shared/api/error-message';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
@@ -20,6 +20,7 @@ export function CategoryForm({
   onCreated: (category: Category) => void;
 }) {
   const [serverError, setServerError] = useState<string | null>(null);
+  const createCategory = useCreateCategory();
   const {
     register,
     handleSubmit,
@@ -33,7 +34,7 @@ export function CategoryForm({
   async function onSubmit(values: CreateCategoryValues) {
     setServerError(null);
     try {
-      const created = await createCategory(values);
+      const created = await createCategory.mutateAsync(values);
       reset({ color: '#4ADE80', icon: 'tag' });
       onCreated(created);
     } catch (err) {
