@@ -1,0 +1,25 @@
+name: Docs check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'apps/backend/src/**/*.controller.ts'
+      - 'apps/backend/CLAUDE.md'
+      - 'apps/backend/scripts/check-endpoint-docs.mjs'
+      - '.github/workflows/docs-check.yml'
+
+jobs:
+  endpoint-table:
+    name: API endpoint table matches the controllers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The check reads source files and needs no dependencies, so skip install.
+      - run: node apps/backend/scripts/check-endpoint-docs.mjs

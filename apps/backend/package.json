@@ -11,6 +11,7 @@
     "test": "jest --config ./test/jest-e2e.json --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand",
     "lint": "eslint \"{src,test}/**/*.ts\"",
+    "check:endpoint-docs": "node scripts/check-endpoint-docs.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"

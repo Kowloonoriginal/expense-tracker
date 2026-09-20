@@ -72,6 +72,10 @@ marked `@Public()`.
 When adding an endpoint, define its DTO in `packages/shared/src/index.ts`
 first, then use it here.
 
+This table is enforced: `npm run check:endpoint-docs --workspace=apps/backend`
+reads the routes back out of the controllers and fails on any drift in either
+direction. CI runs it on every PR that touches a controller or this file.
+
 ## Patterns
 
 **CQRS between modules.** Modules do not import each other's services. A
