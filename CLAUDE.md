@@ -62,7 +62,7 @@ CommandBus/QueryBus → handlers → repositories → Prisma → PostgreSQL.
 
 Full details — CQRS module boundaries, Feature-Sliced Design layers on the
 frontend, the Prisma schema, JWT auth and rate limiting — live in
-@docs/ARCHITECTURE.md.
+@docs/ARCHITECTURE.md file.
 
 ## Environment
 
@@ -75,7 +75,7 @@ Copy `.env.example` to `.env` at the project root. Key vars:
 ## Git Workflow
 
 Branch naming, the PR body structure, and Conventional Commits rules live in
-@docs/GIT_WORKFLOW.md — read it before opening a branch, writing a PR
+@docs/GIT_WORKFLOW.md file — read it before opening a branch, writing a PR
 description, or authoring a commit.
 
 ## Conventions
