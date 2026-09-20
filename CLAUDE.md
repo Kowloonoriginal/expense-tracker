@@ -66,3 +66,9 @@ Copy `.env.example` to `.env` at the project root. Key vars:
 Branch naming, the PR body structure, and Conventional Commits rules live in
 @docs/GIT_WORKFLOW.md file — read it before opening a branch, writing a PR
 description, or authoring a commit.
+
+## Memory
+
+Project memories live in `.claude/memory/`, one fact per file, indexed by
+@.claude/memory/MEMORY.md file — read that index before starting work, and save
+new memories there rather than in a global directory.
