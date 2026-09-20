@@ -4,27 +4,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Expense tracker — npm workspaces monorepo with three packages.
+Expense tracker — npm workspaces monorepo with three packages:
 
-## Tech Stack
+- `apps/frontend` — Next.js 16 (App Router), port 3000 — see its own `CLAUDE.md`
+- `apps/backend` — Nest.js 11, Prisma 6, port 3001 — see its own `CLAUDE.md`
+- `packages/shared` — `@repo/shared`: shared TypeScript interfaces and DTOs,
+  imported by both apps as raw TS (no build step)
 
-**Frontend** (`apps/frontend`): Next.js 16 (App Router), React 19, TypeScript
-5.6, Tailwind CSS 4, `@base-ui/react` + `shadcn` for the component kit,
-`react-hook-form` + `zod` for form validation, `lucide-react` for icons.
+Each app carries its own `CLAUDE.md` with the stack, architecture and
+conventions specific to it; those load automatically when working on files in
+that workspace. Only repo-wide rules belong in this file.
 
-**Backend** (`apps/backend`): Nest.js 11, TypeScript 5.6, `@nestjs/cqrs` for
-the command/query buses, Prisma 6 as the ORM, JWT auth via `@nestjs/jwt` +
-Passport.js (`passport-jwt`), `bcrypt` for password hashing, `@nestjs/throttler`
-for rate limiting, `class-validator` + `class-transformer` for DTO validation.
-Jest for unit and e2e tests.
+**Data flow:** Frontend → REST API → Nest.js controllers → CommandBus/QueryBus
+→ handlers → repositories → Prisma → PostgreSQL.
 
-**Shared** (`packages/shared`): plain TypeScript, no build step or runtime deps
-— consumed as raw `.ts` by both apps via the `@repo/shared` workspace package.
+**Shared types contract:** entity interfaces and DTOs live in
+`packages/shared/src/index.ts`. Both apps import from `@repo/shared`. When
+adding a new endpoint, define its DTO in shared first — it is the one place
+where the two sides agree on a shape.
 
-**Database:** PostgreSQL, run locally via Docker Compose.
-
-**Tooling:** ESLint + Prettier across all workspaces, npm workspaces for the
-monorepo (no Turborepo/Nx).
+**Tooling:** PostgreSQL via Docker Compose, ESLint + Prettier across all
+workspaces, npm workspaces for the monorepo (no Turborepo/Nx).
 
 ## Commands
 
@@ -53,17 +53,6 @@ npm run prisma:migrate --workspace=apps/backend    # Run migrations
 npm run prisma:studio --workspace=apps/backend     # Open Prisma Studio
 ```
 
-## Architecture
-
-Monorepo layout: `apps/frontend` (Next.js, port 3000), `apps/backend`
-(Nest.js, port 3001), `packages/shared` (`@repo/shared`, raw TS, no build
-step). Data flow: Frontend → REST API → Nest.js controllers →
-CommandBus/QueryBus → handlers → repositories → Prisma → PostgreSQL.
-
-Full details — CQRS module boundaries, Feature-Sliced Design layers on the
-frontend, the Prisma schema, JWT auth and rate limiting — live in
-@docs/ARCHITECTURE.md file.
-
 ## Environment
 
 Copy `.env.example` to `.env` at the project root. Key vars:
@@ -77,10 +66,3 @@ Copy `.env.example` to `.env` at the project root. Key vars:
 Branch naming, the PR body structure, and Conventional Commits rules live in
 @docs/GIT_WORKFLOW.md file — read it before opening a branch, writing a PR
 description, or authoring a commit.
-
-## Conventions
-
-- Frontend uses `@/*` path alias mapping to `./src/*`
-- Backend uses `@/*` path alias mapping to `./src/*`
-- Backend uses global `ValidationPipe` with `whitelist: true` — unknown fields are stripped from requests
-- CORS is configured to allow the frontend origin
