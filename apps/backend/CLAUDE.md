@@ -1,17 +1,17 @@
 # Backend — apps/backend
 
 Nest.js 11 on port 3001. Loaded automatically when working on files in this
-workspace; the repo-wide rules stay in the root `CLAUDE.md`.
+workspace; repo-wide rules stay in the root `CLAUDE.md`.
 
-## Stack
+## Backend Architecture
 
-TypeScript 5.6, `@nestjs/cqrs` for the command/query buses, Prisma 6 as the
-ORM, JWT auth via `@nestjs/jwt` + Passport.js (`passport-jwt`), `bcrypt` for
-password hashing, `@nestjs/throttler` for rate limiting, `class-validator` +
-`class-transformer` for DTO validation. Jest for unit and e2e tests.
+Request path: controller → `CommandBus`/`QueryBus` → handler → repository →
+Prisma → PostgreSQL. Controllers hold no business logic; they validate input,
+dispatch, and shape the response.
 
-Modules: `auth`, `users`, `categories`, `transactions`, `notifications`,
-`security`, `prisma`, `config`, `common`.
+Stack: TypeScript 5.6, `@nestjs/cqrs`, Prisma 6, JWT via `@nestjs/jwt` +
+Passport.js (`passport-jwt`), `bcrypt`, `@nestjs/throttler`,
+`class-validator` + `class-transformer`. Jest for unit and e2e tests.
 
 ## Commands
 
@@ -23,12 +23,61 @@ npm run prisma:migrate --workspace=apps/backend
 npm run prisma:studio --workspace=apps/backend
 ```
 
-## CQRS between modules
+## Global Pipes
 
-Modules do not import each other's services. A module's public surface is its
-`contracts/` folder (command, query and event classes plus read models);
-everything else — repositories, handlers, hashers — is internal. To reach
-another module, dispatch its command or query on the bus:
+Set in `src/main.ts` and `src/app.module.ts`, so they apply to every route
+without being declared per controller:
+
+- `ValidationPipe` with `whitelist: true` and `transform: true` — undeclared
+  fields are stripped from the body before a handler sees them, and payloads
+  arrive as real DTO instances
+- `JwtAuthGuard` as `APP_GUARD` (in `auth.module.ts`) — every route requires a
+  token unless marked `@Public()`, so a new controller is protected the moment
+  it is added
+- `ThrottlerGuard` as `APP_GUARD` — 100 req/min baseline
+- `PrismaClientExceptionFilter` as `APP_FILTER` — maps Prisma errors to HTTP
+  responses instead of leaking a 500
+- CORS allows `CORS_ORIGIN` only (default `http://localhost:3000`)
+- `trust proxy` is enabled only when `TRUST_PROXY=1`; without a proxy that
+  strips `X-Forwarded-For`, enabling it lets a client spoof its IP past every
+  rate limit
+
+## Modules
+
+`auth`, `users`, `categories`, `transactions`, `notifications`, `security`,
+`prisma`, `config`, `common`.
+
+### API Endpoints
+
+DTOs come from `@repo/shared`. Everything is behind `JwtAuthGuard` unless
+marked `@Public()`.
+
+| Method | Path                    | DTO / returns                    | Notes                                                                   |
+| ------ | ----------------------- | -------------------------------- | ----------------------------------------------------------------------- |
+| GET    | `/`                     | —                                | `@Public()` health check                                                |
+| POST   | `/auth/register`        | `RegisterDto` → `AuthResponse`   | `@Public()`, 10/hour                                                    |
+| POST   | `/auth/login`           | `LoginDto` → `AuthResponse`      | `@Public()`, 5/min per IP+email, returns 200                            |
+| GET    | `/auth/me`              | → current user                   |                                                                         |
+| POST   | `/categories`           | `CreateCategoryDto`              |                                                                         |
+| GET    | `/categories`           | → list                           |                                                                         |
+| PATCH  | `/categories/:id`       | `UpdateCategoryDto`              |                                                                         |
+| DELETE | `/categories/:id`       | —                                | 204                                                                     |
+| POST   | `/transactions`         | `CreateTransactionDto`           |                                                                         |
+| GET    | `/transactions`         | `GetTransactionsQueryDto` → list |                                                                         |
+| GET    | `/transactions/summary` | `TransactionSummaryQueryDto`     | **must stay declared above `/:id`** — Nest matches in declaration order |
+| GET    | `/transactions/:id`     | → one                            |                                                                         |
+| PATCH  | `/transactions/:id`     | `UpdateTransactionDto`           |                                                                         |
+| DELETE | `/transactions/:id`     | —                                | 204                                                                     |
+
+When adding an endpoint, define its DTO in `packages/shared/src/index.ts`
+first, then use it here.
+
+## Patterns
+
+**CQRS between modules.** Modules do not import each other's services. A
+module's public surface is its `contracts/` folder (command, query and event
+classes plus read models); everything else — repositories, handlers, hashers —
+is internal. To reach another module, dispatch on the bus:
 
 ```ts
 // auth reaching users — imports contract classes only, never UsersModule
@@ -38,41 +87,46 @@ const userId = await this.queryBus.execute(
 );
 ```
 
-`CqrsModule.forRoot()` is registered globally in `AppModule`, so the buses are
-injectable anywhere. Commands mutate and must not be used to read; queries read
-and must not mutate. Cross-module reactions go through `EventBus` — see
-`UserRegisteredEvent` and its subscriber in `src/notifications/`.
+`CqrsModule.forRoot()` is global, so the buses inject anywhere. Commands mutate
+and must not read; queries read and must not mutate. Cross-module reactions go
+through `EventBus` — see `UserRegisteredEvent` and its subscriber in
+`src/notifications/`.
 
-Commands carrying secrets define `toJSON()` that redacts them: CQRS logging
-interceptors serialise whole command objects.
+**Redacted commands.** A command carrying a secret defines `toJSON()` that
+redacts it: CQRS logging interceptors serialise whole command objects.
 
-## Prisma
+**Ownership is not proven by a foreign key.** An FK shows a row exists, not who
+owns it — verify over the bus (e.g. `GetCategoryByIdQuery`) before create or
+update.
 
-Schema at `prisma/schema.prisma`. Models use PascalCase in code, `@@map` to
-snake_case table names in PostgreSQL. All IDs are UUIDs. A foreign key proves a
-row exists but not who owns it — verify ownership over the bus (e.g.
-`GetCategoryByIdQuery`) before create or update.
+**Hashing behind a token.** `PASSWORD_HASHER` in `src/security/` is the only
+place bcrypt is imported; tests swap in a fast fake.
 
-## Auth and security
+**Uniform auth failures.** A wrong password and an unknown email return an
+identical 401, after a randomised delay (`jitter()`), so the response cannot be
+used to enumerate accounts.
 
-JWT-based with Passport.js. `JwtAuthGuard` is registered as a global
-`APP_GUARD`, so every route requires a token unless marked `@Public()` — a new
-controller is protected the moment it is added. `JwtStrategy.validate()`
-re-reads the user on each request, so a deleted account loses access
-immediately.
+### Database
 
-Password hashing lives behind the `PASSWORD_HASHER` token in `src/security/`;
-no other module imports bcrypt, and tests swap in a fast fake.
+Schema at `prisma/schema.prisma`. Models are PascalCase in code and `@@map` to
+snake_case tables: `User`→`users`, `Category`→`categories`,
+`Transaction`→`transactions`, `Expense`→`expenses`. All IDs are UUIDs.
 
-**Rate limiting:** global `ThrottlerGuard` at 100 req/min. `/auth/login` is
-capped at 5/min keyed on IP **and** email (`loginTracker`), `/auth/register` at
-10/hour. Failed logins add a randomised delay (`jitter()`) and return an
-identical 401 for a wrong password and an unknown email.
+### Environment Variables
+
+Read through `ConfigService`; `src/config/validate-env.ts` refuses to boot on a
+bad value.
+
+| Var              | Purpose                                               |
+| ---------------- | ----------------------------------------------------- |
+| `DATABASE_URL`   | PostgreSQL connection string                          |
+| `JWT_SECRET`     | required, ≥32 chars, rejects known placeholders       |
+| `JWT_EXPIRES_IN` | token lifetime (default `7d`)                         |
+| `PORT`           | default 3001                                          |
+| `CORS_ORIGIN`    | default `http://localhost:3000`                       |
+| `TRUST_PROXY`    | `1` only behind a proxy that strips `X-Forwarded-For` |
 
 ## Conventions
 
 - `@/*` path alias maps to `./src/*`
-- Global `ValidationPipe` with `whitelist: true` — unknown fields are stripped
-  from requests, so a DTO field that is not declared never arrives
-- New endpoints define their DTO in `@repo/shared` first, then use it here
-- CORS allows the frontend origin only
+- A route's DTO lives in `@repo/shared`, never redeclared locally
