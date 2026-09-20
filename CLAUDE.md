@@ -6,6 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Expense tracker — npm workspaces monorepo with three packages.
 
+## Tech Stack
+
+**Frontend** (`apps/frontend`): Next.js 16 (App Router), React 19, TypeScript
+5.6, Tailwind CSS 4, `@base-ui/react` + `shadcn` for the component kit,
+`react-hook-form` + `zod` for form validation, `lucide-react` for icons.
+
+**Backend** (`apps/backend`): Nest.js 11, TypeScript 5.6, `@nestjs/cqrs` for
+the command/query buses, Prisma 6 as the ORM, JWT auth via `@nestjs/jwt` +
+Passport.js (`passport-jwt`), `bcrypt` for password hashing, `@nestjs/throttler`
+for rate limiting, `class-validator` + `class-transformer` for DTO validation.
+Jest for unit and e2e tests.
+
+**Shared** (`packages/shared`): plain TypeScript, no build step or runtime deps
+— consumed as raw `.ts` by both apps via the `@repo/shared` workspace package.
+
+**Database:** PostgreSQL, run locally via Docker Compose.
+
+**Tooling:** ESLint + Prettier across all workspaces, npm workspaces for the
+monorepo (no Turborepo/Nx).
+
 ## Commands
 
 ```bash
