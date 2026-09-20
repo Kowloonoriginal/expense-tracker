@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import type { AuthResponse, User } from '@repo/shared';
 import { setUnauthorizedHandler } from '@/shared/api/client';
 import { me } from '../api/auth-api';
@@ -36,6 +37,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  // The query cache is not scoped by user, so it has to be emptied whenever the
+  // session changes. Without this, signing out and signing in as someone else
+  // in the same tab renders the previous user's categories, transactions and
+  // month summary from cache — immediately, and with no refetch at all while
+  // the entries are still inside staleTime.
+  const queryClient = useQueryClient();
 
   // Read in an effect, not in the initial state: localStorage does not exist on
   // the server, and the first client render has to match the server's markup.
@@ -50,21 +57,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setUnauthorizedHandler(() => {
       clearSession();
       setUser(null);
+      queryClient.clear();
       router.replace('/login');
     });
 
     return () => setUnauthorizedHandler(null);
-  }, [router]);
+  }, [router, queryClient]);
 
-  const startSession = useCallback((auth: AuthResponse) => {
-    saveSession(auth);
-    setUser(auth.user);
-  }, []);
+  const startSession = useCallback(
+    (auth: AuthResponse) => {
+      // Cheap insurance for the path where a sign-in follows something other
+      // than a clean endSession — a crashed tab, a restored history entry.
+      queryClient.clear();
+      saveSession(auth);
+      setUser(auth.user);
+    },
+    [queryClient],
+  );
 
   const endSession = useCallback(() => {
     clearSession();
     setUser(null);
-  }, []);
+    queryClient.clear();
+  }, [queryClient]);
 
   const refreshUser = useCallback(async () => {
     try {
