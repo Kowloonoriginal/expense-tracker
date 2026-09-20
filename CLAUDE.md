@@ -72,3 +72,7 @@ description, or authoring a commit.
 Project memories live in `.claude/memory/`, one fact per file, indexed by
 @.claude/memory/MEMORY.md file — read that index before starting work, and save
 new memories there rather than in a global directory.
+
+
+## Оновлення docs 
+При додавані функціонала, провіряй документацію в @.claude/docs/*
