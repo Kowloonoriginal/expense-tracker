@@ -18,6 +18,14 @@ export class GetTransactionByIdHandler implements IQueryHandler<
     private readonly transactionsRepository: TransactionsRepository,
   ) {}
 
+  /**
+   * Fetches one transaction, scoped to its owner.
+   *
+   * @param query - `id` of the transaction plus the authenticated `userId`.
+   * @returns The matching transaction (`TransactionReadModel`).
+   * @throws {NotFoundException} `query.id` does not exist or belongs to
+   *   another user.
+   */
   async execute(query: GetTransactionByIdQuery): Promise<TransactionReadModel> {
     const transaction = await this.transactionsRepository.findByIdForUser(
       query.id,

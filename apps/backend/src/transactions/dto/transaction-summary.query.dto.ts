@@ -1,8 +1,11 @@
 import { Type } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import type { TransactionSummaryQueryDto as SummaryQueryContract } from '@repo/shared';
 
 /**
+ * Query params for `GET /transactions/summary`.
+ *
  * Both params are REQUIRED — note the absence of `@IsOptional()`.
  *
  * Query strings arrive as strings and the global ValidationPipe runs without
@@ -10,14 +13,25 @@ import type { TransactionSummaryQueryDto as SummaryQueryContract } from '@repo/s
  * `@IsInt` runs. A missing param stays `undefined` (`@Type` fabricates nothing),
  * so `@IsInt` rejects it and the client gets a 400 rather than a window built
  * from NaN.
+ *
+ * @throws {BadRequestException} Thrown by the global `ValidationPipe` (not by
+ *   this class itself) when `month`/`year` is missing, non-integer, or out of
+ *   range.
  */
 export class TransactionSummaryQueryDto implements SummaryQueryContract {
+  @ApiProperty({
+    minimum: 1,
+    maximum: 12,
+    example: 3,
+    description: '1-based month',
+  })
   @Type(() => Number)
   @IsInt({ message: 'month must be an integer between 1 and 12' })
   @Min(1, { message: 'month must be between 1 and 12' })
   @Max(12, { message: 'month must be between 1 and 12' })
   month!: number;
 
+  @ApiProperty({ minimum: 1970, maximum: 9999, example: 2025 })
   @Type(() => Number)
   @IsInt({ message: 'year must be an integer' })
   @Min(1970, { message: 'year must be between 1970 and 9999' })

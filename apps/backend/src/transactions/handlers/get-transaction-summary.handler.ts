@@ -26,6 +26,19 @@ export class GetTransactionSummaryHandler implements IQueryHandler<
     private readonly queryBus: QueryBus,
   ) {}
 
+  /**
+   * Builds the caller's income/expense/balance totals for one calendar month,
+   * plus a per-category breakdown.
+   *
+   * Category metadata (name, color, icon) is fetched from CategoriesModule via
+   * `GetCategoriesQuery` — never joined locally — and a category missing from
+   * that result (unreachable in practice, see the fallback below) falls back
+   * to a placeholder rather than dropping the row.
+   *
+   * @param query - `userId` plus a 1-based `month` and `year`.
+   * @returns The monthly summary (`TransactionSummaryReadModel`): totals,
+   *   balance and the per-category breakdown.
+   */
   async execute(
     query: GetTransactionSummaryQuery,
   ): Promise<TransactionSummaryReadModel> {

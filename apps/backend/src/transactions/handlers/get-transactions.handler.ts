@@ -13,6 +13,14 @@ const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
  * parses to 2025-03-31T00:00:00Z — so a date-only bound advances a full day and
  * the repository compares with `lt`. A full timestamp is taken as given.
  */
+/**
+ * Resolves a `dateTo` filter to the exclusive upper bound the repository needs.
+ *
+ * @param value - Raw `dateTo` from the query: a date-only string, a full ISO
+ *   timestamp, or `undefined` when the filter is not set.
+ * @returns `undefined` when `value` is `undefined`; otherwise the parsed
+ *   `Date`, advanced by one day when `value` was date-only.
+ */
 function toExclusiveEnd(value: string | undefined): Date | undefined {
   if (!value) return undefined;
   const parsed = new Date(value);
@@ -30,6 +38,14 @@ export class GetTransactionsHandler implements IQueryHandler<
     private readonly transactionsRepository: TransactionsRepository,
   ) {}
 
+  /**
+   * Lists one user's transactions, filtered and paginated.
+   *
+   * @param query - `userId`, filters (date range/type/category) and pagination.
+   * @returns One page of transactions plus `total`, `page` and `limit`; a
+   *   `page` past the last one comes back as an empty `items` array with the
+   *   real `total`, not clamped to the last valid page.
+   */
   async execute(
     query: GetTransactionsQuery,
   ): Promise<PaginatedTransactionsReadModel> {

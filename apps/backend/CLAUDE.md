@@ -134,3 +134,8 @@ bad value.
 
 - `@/*` path alias maps to `./src/*`
 - A route's DTO lives in `@repo/shared`, never redeclared locally
+
+
+## Аткуалізація документації 
+
+Після зміни любих методів, необхідно аткуалізація або добавити JSDoc. А для dto та контроллерів добавити декоратери swagger.

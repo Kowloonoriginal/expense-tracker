@@ -12,6 +12,14 @@ export class RemoveTransactionHandler implements ICommandHandler<
     private readonly transactionsRepository: TransactionsRepository,
   ) {}
 
+  /**
+   * Deletes a transaction owned by the caller.
+   *
+   * @param command - `id` of the transaction plus the authenticated `userId`.
+   * @returns Nothing on success.
+   * @throws {NotFoundException} `command.id` does not exist or belongs to
+   *   another user.
+   */
   async execute(command: RemoveTransactionCommand): Promise<void> {
     const existing = await this.transactionsRepository.findByIdForUser(
       command.id,
