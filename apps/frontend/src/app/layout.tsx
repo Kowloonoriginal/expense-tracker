@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Geist } from 'next/font/google';
 import { cn } from '@/shared/lib/utils';
+import { QueryProvider } from '@/shared/api/query-provider';
 import { SessionProvider } from '@/entities/session';
 import { Header } from '@/widgets/header';
 
@@ -23,10 +24,12 @@ export default function RootLayout({
   return (
     <html lang="uk" className={cn('font-sans', geist.variable)}>
       <body className="flex min-h-screen flex-col">
-        <SessionProvider>
-          <Header />
-          <div className="flex flex-1 flex-col">{children}</div>
-        </SessionProvider>
+        <QueryProvider>
+          <SessionProvider>
+            <Header />
+            <div className="flex flex-1 flex-col">{children}</div>
+          </SessionProvider>
+        </QueryProvider>
       </body>
     </html>
   );

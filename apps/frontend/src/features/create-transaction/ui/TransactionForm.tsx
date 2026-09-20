@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Category, Transaction } from '@repo/shared';
-import { createTransaction, TYPE_LABEL } from '@/entities/transaction';
+import { useCreateTransaction, TYPE_LABEL } from '@/entities/transaction';
 import { toMessage } from '@/shared/api/error-message';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
@@ -38,6 +38,7 @@ export function TransactionForm({
   onCreated,
 }: TransactionFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
+  const createTransaction = useCreateTransaction();
   const {
     register,
     handleSubmit,
@@ -84,7 +85,7 @@ export function TransactionForm({
   async function onSubmit(values: CreateTransactionValues) {
     setServerError(null);
     try {
-      const created = await createTransaction({
+      const created = await createTransaction.mutateAsync({
         amount: values.amount,
         type: values.type,
         date: values.date,

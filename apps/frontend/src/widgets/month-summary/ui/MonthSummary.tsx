@@ -1,9 +1,9 @@
 'use client';
 
 import type { CategorySummary } from '@repo/shared';
-import { getSummary, TYPE_LABEL } from '@/entities/transaction';
+import { useSummary, TYPE_LABEL } from '@/entities/transaction';
 import { useSession } from '@/entities/session';
-import { useAsync } from '@/shared/lib/use-async';
+import { toMessage } from '@/shared/api/error-message';
 import { formatAmount } from '@/shared/lib/format';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -53,10 +53,7 @@ export function MonthSummary() {
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
-  const { data, error, isLoading } = useAsync(
-    () => getSummary(month, year),
-    [month, year],
-  );
+  const { data, error, isLoading } = useSummary(month, year);
 
   // Largest contributors first — the backend already orders by summed amount.
   const top: CategorySummary[] = (data?.byCategory ?? []).slice(0, 5);
@@ -72,7 +69,7 @@ export function MonthSummary() {
       <CardContent className="grid gap-4">
         {error ? (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{toMessage(error)}</AlertDescription>
           </Alert>
         ) : isLoading ? (
           <Skeleton className="h-24 w-full" />
