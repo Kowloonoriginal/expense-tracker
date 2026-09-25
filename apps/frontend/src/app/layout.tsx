@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Geist } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import { cn } from '@/shared/lib/utils';
 import { QueryProvider } from '@/shared/api/query-provider';
 import { SessionProvider } from '@/entities/session';
 import { Header } from '@/widgets/header';
 
-const geist = Geist({
+const manrope = Manrope({
   subsets: ['latin', 'latin-ext', 'cyrillic'],
   variable: '--font-sans',
 });
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="uk" className={cn('font-sans', geist.variable)}>
+    <html lang="uk" className={cn('font-sans', manrope.variable)}>
       <body className="flex min-h-screen flex-col">
         <QueryProvider>
           <SessionProvider>

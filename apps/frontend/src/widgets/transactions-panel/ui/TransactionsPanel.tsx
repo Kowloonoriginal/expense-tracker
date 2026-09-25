@@ -52,7 +52,7 @@ export function TransactionsPanel({
   }
 
   return (
-    <Card>
+    <Card className="paper">
       <CardHeader className="flex-row items-center justify-between gap-4">
         <CardTitle>{title}</CardTitle>
         {showCreate && (

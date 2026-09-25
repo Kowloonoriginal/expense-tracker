@@ -34,9 +34,11 @@ function SummaryStat({
   accent?: string;
 }) {
   return (
-    <div className="rounded-lg border p-3">
+    <div className="min-w-0">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-xl font-semibold tabular-nums ${accent ?? ''}`}>
+      <p
+        className={`mt-2 truncate text-3xl font-medium tracking-tight tabular-nums sm:text-[2.1rem] ${accent ?? ''}`}
+      >
         {value}
       </p>
     </div>
@@ -62,24 +64,25 @@ export function MonthSummary() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
+        <p className="text-sm text-muted-foreground">Поточний місяць</p>
+        <CardTitle className="text-4xl font-medium tracking-tight sm:text-5xl">
           {MONTHS[month - 1]} {year}
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid gap-8">
         {error ? (
           <Alert variant="destructive">
             <AlertDescription>{toMessage(error)}</AlertDescription>
           </Alert>
         ) : isLoading ? (
-          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full rounded-2xl" />
         ) : (
           <>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-3">
               <SummaryStat
                 label="Доходи"
                 value={formatAmount(data?.income ?? 0, currency)}
-                accent="text-emerald-600"
+                accent="text-income"
               />
               <SummaryStat
                 label="Витрати"
@@ -95,16 +98,21 @@ export function MonthSummary() {
             </div>
 
             {top.length > 0 && (
-              <ul className="grid gap-2">
+              <ul className="grid gap-4 rounded-2xl bg-background/60 p-5 sm:grid-cols-2 sm:gap-x-8">
                 {top.map((row) => (
                   <li
                     key={`${row.categoryId}-${row.type}`}
-                    className="grid gap-1"
+                    className="grid gap-2"
                   >
                     <div className="flex items-baseline justify-between gap-2 text-sm">
-                      <span className="truncate">
-                        {row.name}
-                        <span className="ml-2 text-muted-foreground">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span
+                          aria-hidden
+                          className="size-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: row.color }}
+                        />
+                        <span className="truncate">{row.name}</span>
+                        <span className="text-xs text-muted-foreground">
                           {TYPE_LABEL[row.type]}
                         </span>
                       </span>
@@ -112,14 +120,12 @@ export function MonthSummary() {
                         {formatAmount(row.total, currency)}
                       </span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                    {/* Hatched lime track, as in the reference's payout bars. */}
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full"
+                        className="h-full rounded-full bg-primary bg-[repeating-linear-gradient(-45deg,transparent_0_4px,rgb(0_0_0/12%)_4px_6px)]"
                         style={{
                           width: `${largest ? (row.total / largest) * 100 : 0}%`,
-                          // Colour comes from the category, not --chart-*, which
-                          // are greyscale ramps in this theme.
-                          backgroundColor: row.color,
                         }}
                       />
                     </div>

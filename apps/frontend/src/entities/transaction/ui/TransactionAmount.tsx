@@ -20,7 +20,7 @@ export function TransactionAmount({
       className={cn(
         'font-medium tabular-nums',
         // The sign carries the meaning on its own; colour only reinforces it.
-        type === 'INCOME' ? 'text-emerald-600' : 'text-foreground',
+        type === 'INCOME' ? 'text-income' : 'text-foreground',
         className,
       )}
     >
