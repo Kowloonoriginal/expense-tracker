@@ -10,7 +10,7 @@ import { RequireAuth } from '@/entities/session';
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <RequireAuth>
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 px-4 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 space-y-5 px-4 py-8 sm:px-6">
         {children}
       </main>
     </RequireAuth>

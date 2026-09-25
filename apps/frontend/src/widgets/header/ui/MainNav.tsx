@@ -10,11 +10,12 @@ const LINKS = [
   { href: '/categories', label: 'Категорії' },
 ];
 
+/** The white pill switcher from the reference; the active tab lights up lime. */
 export function MainNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="paper flex items-center gap-1 rounded-full bg-background p-1 shadow-[0_0_0_4px_var(--color-card)]">
       {LINKS.map((link) => {
         const isActive = pathname === link.href;
 
@@ -24,9 +25,9 @@ export function MainNav() {
             href={link.href}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              'rounded-md px-2.5 py-1 text-sm transition-colors',
+              'rounded-full px-4 py-1.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
               isActive
-                ? 'bg-muted font-medium text-foreground'
+                ? 'bg-primary font-semibold text-primary-foreground'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >

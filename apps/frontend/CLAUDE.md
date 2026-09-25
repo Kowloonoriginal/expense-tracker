@@ -56,10 +56,13 @@ there is no logic beyond clearing the session. Split when behaviour appears.
 ## Conventions
 
 - `@/*` path alias maps to `./src/*`
+- The theme is dark by default (navy ground, lime `--primary`). Add the
+  `paper` class to a block to flip it into the light "sheet" palette — every
+  token inside re-resolves. Income amounts use `text-income`
 - Colours come from the theme tokens in `src/app/globals.css`
   (`text-muted-foreground`, `bg-background`…), never hardcoded Tailwind
   palette classes like `text-gray-600` — those break dark mode
 - `next/font` subsets must cover the copy actually rendered: the UI is
-  Ukrainian, so `Geist` loads `['latin', 'latin-ext', 'cyrillic']`. A missing
+  Ukrainian, so `Manrope` loads `['latin', 'latin-ext', 'cyrillic']`. A missing
   subset fails silently into a fallback font
 - `NEXT_PUBLIC_API_URL` points at the backend (default `http://localhost:3001`)
